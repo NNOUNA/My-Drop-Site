@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calculateur longueur de ruban — GCER</title>
+
+  <style>
+    :root{
+      --gcer-green:#4db279;
+      --gcer-brown:#7b5f48;
+      --bg:#f7f7f6;
+      --card:#ffffff;
+      --muted:#666;
+      --accent:var(--gcer-green);
+      font-family: Inter, Roboto, Arial, sans-serif;
+    }
+    body{background:var(--bg);margin:0;color:#222}
+    .page{max-width:980px;margin:28px auto;padding:22px}
+    header{display:flex;align-items:center;gap:16px}
+    header img{height:56px}
+    header h1{font-size:20px;margin:0;color:var(--gcer-brown)}
+    .card{background:var(--card);border-radius:12px;padding:18px;margin-top:18px;box-shadow:0 6px 18px rgba(30,30,30,0.06)}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input[type=number]{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:15px}
+    .calc-btn{background:var(--accent);border:none;color:white;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+    .metric{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #eee}
+    .metric:last-child{border-bottom:none}
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+<header>
+  <img src="https://evident-fuchsia-ahhrhnwwqr.edgeone.app/gcer-logo-B9YKAQLs.jpg" alt="Logo GCER">
+  <div>
+    <h1>Calculateur — Longueur & Surface du Ruban</h1>
+    <div class="small">Version étendue : Cylindre, Tore, Quart de Tore</div>
+  </div>
+</header>
+
+<!-- CALCULATEUR -->
+<div class="card grid">
+  <div>
+    <h2>Paramètres</h2>
+
+    <label>Longueur utile L [mm]
+      <input id="usefulLength" type="number" value="1000">
+    </label>
+
+    <label>Diamètre extérieur D [mm]
+      <input id="diameter" type="number" value="89">
+    </label>
+
+    <label>Largeur ruban W [mm]
+      <input id="tapeWidth" type="number" value="50">
+    </label>
+
+    <label>Recouvrement (Overlap) [mm]
+      <input id="overlap" type="number" value="10">
+    </label>
+
+    <label>Cutback [mm]
+      <input id="cutback" type="number" value="50">
+    </label>
+
+    <!-- CHANGED: unit is now m² -->
+    <label>Surface réelle du cylindre (développée) [m²]
+      <input id="realSurface" type="number" value="0" step="any">
+    </label>
+
+    <br>
+    <button class="calc-btn" onclick="calculate()">Calculer</button>
+  </div>
+
+  <!-- RESULTATS -->
+  <div class="card">
+    <h3>Résultats</h3>
+
+    <div class="metric"><div>Longueur ruban</div><div id="tapeLength_m">— m</div></div>
+    <div class="metric"><div>Longueur ruban</div><div id="tapeLength_mm">— mm</div></div>
+
+    <div class="metric"><div>Surface ruban</div><div id="surface_mm2">— mm²</div></div>
+    <div class="metric"><div>Surface ruban</div><div id="surface_m2">— m²</div></div>
+
+    <div class="metric"><div>Nombre de tours</div><div id="numTurns">—</div></div>
+
+    <div class="metric"><div>Coefficient (surface rouleau / surface réelle)</div><div id="coef">—</div></div>
+     <div class="formula">L = ((L + 2×Cutback)/(W−Overlap)) × π × D</div>
+
+  </div>
+</div>
+
+<!-- IMAGE -->
+<div class="card">
+  <h2>Schéma explicatif</h2>
+  <img src="https://unaware-cyan-t70bplxxby.edgeone.app/9ccdb3958096892c88478ca8d4429b167b3ef3201d692a6bec3ea42799cb2075%20(1).png"
+       style="width:100%;border-radius:10px">
+</div>
+
+<!-- VIDEO -->
+<div class="card">
+  <h2>Développement géométrique : Tore et Cylindre</h2>
+
+  <iframe src="https://screenapp.io/app/v/ZFwNikyOM5"
+          width="100%" height="420"
+          style="border:none;border-radius:10px"
+          allowfullscreen>
+  </iframe>
+</div>
+
+</div>
+
+<script>
+function mmToM(v){return v/1000}
+function formatNumber(v,dec=3){
+  return Number(v).toLocaleString('fr-FR',{minimumFractionDigits:dec,maximumFractionDigits:dec})
+}
+
+function calculate(){
+  const L = parseFloat(document.getElementById('usefulLength').value)||0;
+  const D = parseFloat(document.getElementById('diameter').value)||0;
+  const W = parseFloat(document.getElementById('tapeWidth').value)||0;
+  const overlap = parseFloat(document.getElementById('overlap').value)||0;
+  const cutback = parseFloat(document.getElementById('cutback').value)||0;
+  // realSurface is now entered in m² (changed)
+  const realSurface_m2 = parseFloat(document.getElementById('realSurface').value)||0;
+
+  const effective = W - overlap;
+  if(effective<=0){ alert("Largeur effective ≤ 0"); return; }
+
+  const total = L + 2*cutback;
+  const numTurns = total/effective;
+  const tapeLength_mm = numTurns*(Math.PI*D);
+  const surface_mm2 = tapeLength_mm * W;
+
+  document.getElementById('tapeLength_mm').innerText = formatNumber(tapeLength_mm,2)+" mm";
+  document.getElementById('tapeLength_m').innerText = formatNumber(mmToM(tapeLength_mm),4)+" m";
+
+  document.getElementById('surface_mm2').innerText = formatNumber(surface_mm2,0)+" mm²";
+  document.getElementById('surface_m2').innerText = formatNumber(surface_mm2/1e6,4)+" m²";
+
+  document.getElementById('numTurns').innerText = formatNumber(numTurns,3);
+
+  if(realSurface_m2>0){
+    // convert entered real surface from m² to mm² for comparison
+    const realSurface_mm2 = realSurface_m2 * 1e6;
+    const coef = surface_mm2 / realSurface_mm2;
+    document.getElementById('coef').innerText = formatNumber(coef,3);
+  } else {
+    document.getElementById('coef').innerText = "—";
+  }
+}
+</script>
+
+</body>
+</html>
