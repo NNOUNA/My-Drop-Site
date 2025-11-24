@@ -13,12 +13,14 @@ input[type=number]{width:140px;padding:6px;margin-top:6px}
 img.schema{width:100%;max-width:750px;border:1px solid #ccc;border-radius:6px;margin:15px 0}
 .btn{padding:8px 12px;margin:8px 6px}
 .small{font-size:13px;color:#444}
+.final-img{margin-top:25px;text-align:center}
+.final-img img{max-width:650px;width:100%;border:1px solid #aaa;border-radius:8px;margin-top:10px}
 </style>
 </head>
 <body>
 
 <img src="https://gcertunisie.com/build/assets/gcer-logo-B9YKAQLs.svg" style="width:160px;margin-bottom:12px;">
-<h1>Calculateur détaillé — Caps GRC (version corrigée)</h1>
+<h1>Calculateur détaillé — Caps GRC </h1>
 
 <h2>Schéma explicatif des variables</h2>
 <img class="schema" src="https://grand-maroon-t3y7mxbzgp.edgeone.app/tout%20variable%20caps%20(1).jpg" alt="Variables caps GRC" onerror="this.style.display='none'">
@@ -81,6 +83,14 @@ Formule : S = π·(RextBride² – (Rint + Ep)²)
 <h2>Résultats</h2>
 <div class="result" id="summary"></div>
 
+<!-- ⭐ AJOUT FINAL DE L'IMAGE ⭐ -->
+<div class="final-img">
+    <h2>Différentes compositions possibles de cap</h2>
+    <a href="https://postimg.cc/nCQpjRfc" target="_blank">Lien vers l’image</a>
+    <br>
+    <img src="https://s11.aconvert.com/convert/p3r68-cdx67/09fwn-0su5t.jpg" alt="Différentes compositions possibles de cap">
+</div>
+
 <script>
 // Utilitaires
 function mm(v){return Number(v)||0;}
@@ -88,16 +98,16 @@ function mm(v){return Number(v)||0;}
 // Calculs automatiques basés sur D
 function computeAuto(){
   const Dv = mm(document.getElementById('D').value);
-  const Ri = Dv;              // selon ta règle Ri = D
-  const Rc = Ri * 0.1;        // Rc = 0.1 * Ri
-  const betaDeg = 63.612;     // beta en degrés (fixe)
+  const Ri = Dv;
+  const Rc = Ri * 0.1;
+  const betaDeg = 63.612;
   const beta = betaDeg * Math.PI/180;
   const H2 = Math.sin(beta) * Rc;
   const H1 = Math.tan((Math.PI/2 - beta)/2) * Math.sin(Math.PI/2 - beta) * Ri;
   return {Dv, Ri, Rc, beta, H1, H2};
 }
 
-// Mettre à jour l'affichage des paramètres calculés
+// Mettre à jour affichage
 function updateAutoDisplay(){
   const o = computeAuto();
   document.getElementById('RiAff').textContent = o.Ri.toFixed(3);
@@ -105,21 +115,16 @@ function updateAutoDisplay(){
   document.getElementById('H1Aff').textContent = o.H1.toFixed(3);
   document.getElementById('H2Aff').textContent = o.H2.toFixed(3);
   document.getElementById('HsumAff').textContent = (o.H1 + o.H2).toFixed(3);
-  document.getElementById('BetaAff').textContent = '63.612';
-  // update H3 and H display if H exists
   const Hval = mm(document.getElementById('H').value);
   document.getElementById('H3Aff').textContent = Math.max(0, Hval - o.H1 - o.H2).toFixed(3);
-  document.getElementById('HAff').textContent = Hval;
 }
 
-// Evenements
-document.getElementById('autoFill').addEventListener('click', ()=> updateAutoDisplay());
-// update on D or Ep change also
-document.getElementById('D').addEventListener('input', ()=> updateAutoDisplay());
-document.getElementById('Ep').addEventListener('input', ()=> updateAutoDisplay());
+document.getElementById('autoFill').addEventListener('click', updateAutoDisplay);
+document.getElementById('D').addEventListener('input', updateAutoDisplay);
+document.getElementById('Ep').addEventListener('input', updateAutoDisplay);
 
 document.getElementById('zBride').addEventListener('change', ()=>{
-  document.getElementById('brideInputs').style.display = document.getElementById('zBride').checked ? 'block' : 'none';
+  document.getElementById('brideInputs').style.display = document.getElementById('zBride').checked ? 'block':'none';
 });
 
 // Calcul des surfaces
@@ -131,37 +136,32 @@ document.getElementById('calc').addEventListener('click', ()=>{
   let total = 0;
   let out = '';
 
-  // calotte
   if(document.getElementById('zCalotte').checked){
     const H1ext = o.H1 + Epv * (1 - Math.cos(26.3878 * Math.PI/180));
     const S = 2 * pi * (o.Ri + Epv) * H1ext;
     total += S; out += `Calotte = ${S.toFixed(3)} mm²<br>`;
   }
 
-  // torique - formule Excel exacte sans Rctor
   if(document.getElementById('zTorique').checked){
     const alphaDeg = 63.6122;
-    const Alpha = alphaDeg * Math.PI/180; // radians
-    const rc = o.Rc; // rc = 0.1 * Ri
+    const Alpha = alphaDeg * Math.PI/180;
+    const rc = o.Rc;
     const S = (rc + Epv) * Alpha * 2 * pi * (((o.Dv - 2*rc) / 2)
             + (((rc + Epv) * (Math.sin(Alpha) / Alpha))));
     total += S; out += `Torique = ${S.toFixed(3)} mm²<br>`;
   }
 
-  // cylindrique
   if(document.getElementById('zCyl').checked){
     const H3 = Math.max(0, Hv - o.H1 - o.H2);
     const S = pi * (o.Dv + 2*Epv) * H3;
     total += S; out += `Cylindre = ${S.toFixed(3)} mm² (H3=${H3.toFixed(3)} mm)<br>`;
   }
 
-  // renfort
   if(document.getElementById('zRenfort').checked){
     const S = 100 * 2 * pi * (((o.Dv + 2*Epv)/2 + 63.66) - (63.66 * 2/pi));
-    total += S; out += `Renfort (approx) = ${S.toFixed(3)} mm²<br>`;
+    total += S; out += `Renfort = ${S.toFixed(3)} mm²<br>`;
   }
 
-  // bride
   if(document.getElementById('zBride').checked){
     const Rint = o.Dv/2;
     const RextB = mm(document.getElementById('DextBride').value)/2;
@@ -169,10 +169,10 @@ document.getElementById('calc').addEventListener('click', ()=>{
     total += S; out += `Bride = ${S.toFixed(3)} mm²<br>`;
   }
 
-  document.getElementById('summary').innerHTML = out + `<hr><b>Total = ${total.toFixed(3)} mm²<br>Total = ${(total/1e6).toFixed(6)} m²</b>`;
+  document.getElementById('summary').innerHTML =
+    out + `<hr><b>Total = ${total.toFixed(3)} mm²<br>Total = ${(total/1e6).toFixed(6)} m²</b>`;
 });
 
-// initial update
 updateAutoDisplay();
 </script>
 
